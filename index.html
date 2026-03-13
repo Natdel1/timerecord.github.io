@@ -63,6 +63,10 @@
     <div class="section">
         <div class="row">
             <div style="display: flex; flex-direction: column; gap: 5px; flex: 1;">
+                <label>เลือกวันที่:</label>
+                <input type="date" id="mainDateSelect" onchange="renderTable()">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 5px; flex: 1;">
                 <label>เลือกเวลาทดสอบ:</label>
                 <select id="mainTimeSelect" onchange="renderTable()"></select>
             </div>
@@ -97,6 +101,7 @@
             <thead>
                 <tr>
                     <th>วัน/เวลาที่ทำรายการ</th>
+                    <th>วันที่</th>
                     <th>รอบเวลาที่บันทึก</th>
                     <th>Tester Name</th>
                     <th>Testing in progress</th>
@@ -120,12 +125,13 @@
     ];
 
     let testers = JSON.parse(localStorage.getItem('savedTesters')) || defaultTesters;
-    let logs = JSON.parse(localStorage.getItem('testLogDB_v3')) || {}; 
-    let history = JSON.parse(localStorage.getItem('auditTrail')) || [];
+let logs = JSON.parse(localStorage.getItem('testLogDB_v4')) || {}; 
+let history = JSON.parse(localStorage.getItem('auditTrail_v2')) || [];
 let isSaved = false;
 
     window.onload = () => {
-        generateTimeOptions();
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('mainDateSelect').value = today;
         renderTable();
         renderHistory();
     };
@@ -144,11 +150,11 @@ let isSaved = false;
     }
 
     function renderTable() {
-        const selectedTime = document.getElementById('mainTimeSelect').value;
-        const tbody = document.getElementById('testerTableBody');
-        tbody.innerHTML = "";
-        const timeData = logs[selectedTime] || {};
-
+    const selectedDate = document.getElementById('mainDateSelect').value;
+    const selectedTime = document.getElementById('mainTimeSelect').value;
+    const tbody = document.getElementById('testerTableBody');
+    tbody.innerHTML = "";
+    const timeData = logs[selectedDate]?.[selectedTime] || {};
         testers.forEach(tester => {
             const row = tbody.insertRow();
             const currentStatus = timeData[tester]?.result || "No test";
@@ -175,12 +181,13 @@ let isSaved = false;
     }
 
     function saveAllData() {
-        const selectedTime = document.getElementById('mainTimeSelect').value;
-        const rows = document.querySelectorAll('#testerTableBody tr');
-        const now = new Date().toLocaleString('th-TH'); // เวลาที่กดบันทึกจริง
-        
-        if (!logs[selectedTime]) logs[selectedTime] = {};
-
+    const selectedDate = document.getElementById('mainDateSelect').value;
+    const selectedTime = document.getElementById('mainTimeSelect').value;
+    const rows = document.querySelectorAll('#testerTableBody tr');
+    const now = new Date().toLocaleString('th-TH'); // เวลาที่กดบันทึกจริง
+    
+    if (!logs[selectedDate]) logs[selectedDate] = {};
+    if (!logs[selectedDate][selectedTime]) logs[selectedDate][selectedTime] = {};
         rows.forEach(row => {
             const name = row.cells[0].innerText;
             const progress = row.cells[1].querySelector('select').value;
@@ -188,11 +195,12 @@ let isSaved = false;
             const remark = row.cells[3].querySelector('input').value;
 
             // ตรวจสอบว่ามีการเปลี่ยนแปลงหรือไม่ก่อนลง Log
-            const oldData = logs[selectedTime][name];
+            const oldData = logs[selectedDate][selectedTime][name];
             if (!oldData || oldData.progress !== progress || oldData.result !== result || oldData.remark !== remark) {
                 // เพิ่มเข้า History
                 history.unshift({
                     timestamp: now,
+                    date: selectedDate,
                     shiftTime: selectedTime,
                     tester: name,
                     progress: progress,
@@ -200,12 +208,12 @@ let isSaved = false;
                     remark: remark
                 });
                 // อัปเดตข้อมูลปัจจุบัน
-                logs[selectedTime][name] = { progress, result, remark };
+                logs[selectedDate][selectedTime][name] = { progress, result, remark };
             }
         });
 
-        localStorage.setItem('testLogDB_v3', JSON.stringify(logs));
-        localStorage.setItem('auditTrail', JSON.stringify(history));
+        localStorage.setItem('testLogDB_v4', JSON.stringify(logs));
+        localStorage.setItem('auditTrail_v2', JSON.stringify(history));
         renderHistory();
         isSaved = true;
         alert("บันทึกข้อมูลและอัปเดตประวัติการแก้ไขแล้ว");
@@ -218,6 +226,7 @@ let isSaved = false;
             const row = tbody.insertRow();
             row.innerHTML = `
                 <td class="timestamp-log">${item.timestamp}</td>
+                <td>${item.date}</td>
                 <td><strong>${item.shiftTime}</strong></td>
                 <td>${item.tester}</td>
                 <td>${item.progress}</td>
@@ -245,11 +254,12 @@ let isSaved = false;
     }
 
     function exportToPDF() {
+        const selectedDate = document.getElementById('mainDateSelect').value;
         const selectedTime = document.getElementById('mainTimeSelect').value;
         const element = document.querySelector('.container');
         const opt = {
             margin: 1,
-            filename: selectedTime.replace(':', '-') + '.pdf',
+            filename: selectedDate + '_' + selectedTime.replace(':', '-') + '.pdf',
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2 },
             jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
