@@ -76,9 +76,10 @@
         <table id="mainTable">
             <thead>
                 <tr>
-                    <th width="30%">Tester Name</th>
+                    <th width="25%">Tester Name</th>
+                    <th width="15%">Testing in progress</th>
                     <th width="20%">Result</th>
-                    <th width="50%">Remark</th>
+                    <th width="40%">Remark</th>
                 </tr>
             </thead>
             <tbody id="testerTableBody"></tbody>
@@ -98,6 +99,7 @@
                     <th>วัน/เวลาที่ทำรายการ</th>
                     <th>รอบเวลาที่บันทึก</th>
                     <th>Tester Name</th>
+                    <th>Testing in progress</th>
                     <th>Result</th>
                     <th>Remark</th>
                 </tr>
@@ -152,8 +154,15 @@ let isSaved = false;
             const row = tbody.insertRow();
             const currentStatus = timeData[tester]?.result || "No test";
             const currentRemark = timeData[tester]?.remark || "";
+            const currentProgress = timeData[tester]?.progress || "No";
             row.innerHTML = `
                 <td><strong>${tester}</strong></td>
+                <td>
+                    <select class="progress-select">
+                        <option value="No" ${currentProgress === 'No' ? 'selected' : ''}>No</option>
+                        <option value="Yes" ${currentProgress === 'Yes' ? 'selected' : ''}>Yes</option>
+                    </select>
+                </td>
                 <td>
                     <select class="status-select ${currentStatus.replace(" ","")}" onchange="this.className='status-select '+this.value.replace(' ','')">
                         <option value="No test" ${currentStatus === 'No test' ? 'selected' : ''}>No test</option>
@@ -175,22 +184,24 @@ let isSaved = false;
 
         rows.forEach(row => {
             const name = row.cells[0].innerText;
-            const result = row.cells[1].querySelector('select').value;
-            const remark = row.cells[2].querySelector('input').value;
+            const progress = row.cells[1].querySelector('select').value;
+            const result = row.cells[2].querySelector('select').value;
+            const remark = row.cells[3].querySelector('input').value;
 
             // ตรวจสอบว่ามีการเปลี่ยนแปลงหรือไม่ก่อนลง Log
             const oldData = logs[selectedTime][name];
-            if (!oldData || oldData.result !== result || oldData.remark !== remark) {
+            if (!oldData || oldData.progress !== progress || oldData.result !== result || oldData.remark !== remark) {
                 // เพิ่มเข้า History
                 history.unshift({
                     timestamp: now,
                     shiftTime: selectedTime,
                     tester: name,
+                    progress: progress,
                     result: result,
                     remark: remark
                 });
                 // อัปเดตข้อมูลปัจจุบัน
-                logs[selectedTime][name] = { result, remark };
+                logs[selectedTime][name] = { progress, result, remark };
             }
         });
 
@@ -210,6 +221,7 @@ let isSaved = false;
                 <td class="timestamp-log">${item.timestamp}</td>
                 <td><strong>${item.shiftTime}</strong></td>
                 <td>${item.tester}</td>
+                <td>${item.progress}</td>
                 <td>${item.result}</td>
                 <td>${item.remark}</td>
             `;
