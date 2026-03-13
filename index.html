@@ -66,7 +66,7 @@
             </div>
             <button class="btn-add" onclick="addNewTester()">+ เพิ่มชื่อ</button>
             <button class="btn-save" onclick="saveAllData()" style="margin-left: auto;">💾 บันทึกข้อมูลและลงประวัติ</button>
-            <button class="btn-print" onclick="window.print()">🖨️ พิมพ์</button>
+            <button class="btn-print" onclick="printIfSaved()">🖨️ พิมพ์</button>
         </div>
     </div>
 
@@ -113,8 +113,7 @@
     let testers = JSON.parse(localStorage.getItem('savedTesters')) || defaultTesters;
     let logs = JSON.parse(localStorage.getItem('testLogDB_v3')) || {}; 
     let history = JSON.parse(localStorage.getItem('auditTrail')) || [];
-
-    window.onload = () => {
+let isSaved = false;
         generateTimeOptions();
         renderTable();
         renderHistory();
@@ -188,6 +187,7 @@
         localStorage.setItem('testLogDB_v3', JSON.stringify(logs));
         localStorage.setItem('auditTrail', JSON.stringify(history));
         renderHistory();
+        isSaved = true;
         alert("บันทึกข้อมูลและอัปเดตประวัติการแก้ไขแล้ว");
     }
 
@@ -213,6 +213,14 @@
             localStorage.setItem('savedTesters', JSON.stringify(testers));
             renderTable();
         }
+    }
+
+    function printIfSaved() {
+        if (!isSaved) {
+            alert("กรุณาบันทึกข้อมูลก่อนพิมพ์");
+            return;
+        }
+        window.print();
     }
 </script>
 
