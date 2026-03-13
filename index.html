@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Test System with Immutable History</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root { --primary: #1a73e8; --bg: #f8fafc; --dark: #1e293b; --history: #64748b; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); padding: 20px; color: var(--dark); }
@@ -67,6 +68,7 @@
             <button class="btn-add" onclick="addNewTester()">+ เพิ่มชื่อ</button>
             <button class="btn-save" onclick="saveAllData()" style="margin-left: auto;">💾 บันทึกข้อมูลและลงประวัติ</button>
             <button class="btn-print" onclick="printIfSaved()">🖨️ พิมพ์</button>
+            <button class="btn-print" onclick="exportToPDF()">📄 Export PDF</button>
         </div>
     </div>
 
@@ -240,6 +242,19 @@ let isSaved = false;
             return;
         }
         window.print();
+    }
+
+    function exportToPDF() {
+        const selectedTime = document.getElementById('mainTimeSelect').value;
+        const element = document.querySelector('.container');
+        const opt = {
+            margin: 1,
+            filename: selectedTime.replace(':', '-') + '.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save();
     }
 </script>
 
