@@ -130,8 +130,13 @@ let history = JSON.parse(localStorage.getItem('auditTrail_v2')) || [];
 let isSaved = false;
 
     window.onload = () => {
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('mainDateSelect').value = today;
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('mainDateSelect').value = today;
+        generateTimeOptions();
+        const timeSelect = document.getElementById('mainTimeSelect');
+        if (!timeSelect.value && timeSelect.options.length) {
+            timeSelect.value = timeSelect.options[0].value;
+        }
         renderTable();
         renderHistory();
     };
@@ -150,11 +155,12 @@ let isSaved = false;
     }
 
     function renderTable() {
-    const selectedDate = document.getElementById('mainDateSelect').value;
-    const selectedTime = document.getElementById('mainTimeSelect').value;
-    const tbody = document.getElementById('testerTableBody');
-    tbody.innerHTML = "";
-    const timeData = logs[selectedDate]?.[selectedTime] || {};
+        const selectedDate = document.getElementById('mainDateSelect').value;
+        const timeSelect = document.getElementById('mainTimeSelect');
+        const selectedTime = timeSelect.value || (timeSelect.options[0] ? timeSelect.options[0].value : '');
+        const tbody = document.getElementById('testerTableBody');
+        tbody.innerHTML = "";
+        const timeData = logs[selectedDate]?.[selectedTime] || {};
         testers.forEach(tester => {
             const row = tbody.insertRow();
             const currentStatus = timeData[tester]?.result || "No test";
