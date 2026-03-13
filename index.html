@@ -53,9 +53,6 @@
             .status-select { -webkit-print-color-adjust: exact; print-color-adjust: exact; appearance: none; border: none; }
             .history-section { page-break-before: always; }
         }
-
-        /* Hide editable sections to show only history */
-        h2, .section:not(.history-section) { display: none; }
     </style>
 </head>
 <body>
@@ -312,7 +309,7 @@ let isSaved = false;
         function exportToHTML() {
         const selectedDate = document.getElementById('mainDateSelect').value;
         const selectedTime = document.getElementById('mainTimeSelect').value;
-        const containerHTML = document.querySelector('.container').innerHTML;
+        const historyHTML = document.querySelector('.history-section').outerHTML;
         const styleText = document.querySelector('style').innerText;
 
         const content = `<!DOCTYPE html>` +
@@ -320,17 +317,17 @@ let isSaved = false;
             `<head>` +
             `<meta charset="UTF-8">` +
             `<meta name="viewport" content="width=device-width, initial-scale=1.0">` +
-            `<title>Exported Test Log</title>` +
+            `<title>Exported History Log</title>` +
             `<style>${styleText}</style>` +
             `</head>` +
-            `<body>${containerHTML}</body>` +
+            `<body><div class="container">${historyHTML}</div></body>` +
             `</html>`;
 
         const blob = new Blob([content], { type: 'text/html' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'export_' + selectedDate + '_' + selectedTime.replace(':', '-') + '.html';
+        a.download = 'export_history_' + selectedDate + '_' + selectedTime.replace(':', '-') + '.html';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
