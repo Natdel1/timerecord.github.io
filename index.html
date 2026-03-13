@@ -53,6 +53,9 @@
             .status-select { -webkit-print-color-adjust: exact; print-color-adjust: exact; appearance: none; border: none; }
             .history-section { page-break-before: always; }
         }
+
+        /* Hide editable sections to show only history */
+        h2, .section:not(.history-section) { display: none; }
     </style>
 </head>
 <body>
@@ -64,7 +67,7 @@
         <div class="row">
             <div style="display: flex; flex-direction: column; gap: 5px; flex: 1;">
                 <label>เลือกวันที่:</label>
-                <input type="date" id="mainDateSelect" onchange="renderTable()">
+                <input type="date" id="mainDateSelect" onchange="onDateChange()">
             </div>
             <div style="display: flex; flex-direction: column; gap: 5px; flex: 1;">
                 <label>เลือกเวลาทดสอบ:</label>
@@ -133,30 +136,62 @@ let isSaved = false;
     window.onload = () => {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('mainDateSelect').value = today;
-        generateTimeOptions();
-        const timeSelect = document.getElementById('mainTimeSelect');
-        if (!timeSelect.value && timeSelect.options.length) {
-            timeSelect.value = timeSelect.options[0].value;
-        }
+        generateTimeOptions(today);
         renderTable();
         renderHistory();
     };
 
-    function generateTimeOptions() {
+    function generateTimeOptions(selectedDate = null, selectedTime = null) {
         const select = document.getElementById('mainTimeSelect');
+        const previousSelection = select.value;
+        select.innerHTML = "";
+
+        // Default times (every 30 minutes from 19:30 to 07:00 next day)
         let start = new Date(); start.setHours(19, 30, 0);
         let end = new Date(); end.setDate(end.getDate() + 1); end.setHours(7, 0, 0);
+        const baseTimes = [];
 
         while (start <= end) {
             let timeStr = start.getHours().toString().padStart(2, '0') + ":" + start.getMinutes().toString().padStart(2, '0');
-            let opt = document.createElement("option"); opt.value = timeStr; opt.text = timeStr;
-            select.add(opt);
+            baseTimes.push(timeStr);
             start.setMinutes(start.getMinutes() + 30);
+        }
+
+        // Add any extra times that exist in the logs for the selected date
+        const extraTimes = selectedDate && logs[selectedDate] ? Object.keys(logs[selectedDate]) : [];
+        const allTimes = Array.from(new Set([...baseTimes, ...extraTimes])).sort();
+
+        allTimes.forEach(timeStr => {
+            const opt = document.createElement("option");
+            opt.value = timeStr;
+            opt.text = timeStr;
+            select.add(opt);
+        });
+
+        // Preserve previous selection or use provided/default selection
+        if (selectedTime && allTimes.includes(selectedTime)) {
+            select.value = selectedTime;
+        } else if (previousSelection && allTimes.includes(previousSelection)) {
+            select.value = previousSelection;
+        } else if (selectedDate && extraTimes.length) {
+            // default to last logged time for the day
+            select.value = extraTimes.sort().slice(-1)[0];
+        } else if (allTimes.length) {
+            select.value = allTimes[0];
         }
     }
 
+    function onDateChange() {
+        const dateElem = document.getElementById('mainDateSelect');
+        if (!dateElem.value) {
+            dateElem.value = new Date().toISOString().split('T')[0];
+        }
+        generateTimeOptions(dateElem.value);
+        renderTable();
+    }
+
     function renderTable() {
-        const selectedDate = document.getElementById('mainDateSelect').value;
+        const selectedDate = document.getElementById('mainDateSelect').value || new Date().toISOString().split('T')[0];
         const timeSelect = document.getElementById('mainTimeSelect');
         const selectedTime = timeSelect.value || (timeSelect.options[0] ? timeSelect.options[0].value : '');
         const tbody = document.getElementById('testerTableBody');
