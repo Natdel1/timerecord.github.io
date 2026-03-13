@@ -91,11 +91,6 @@
         </table>
     </div>
 
-    <div class="section">
-        <h4>Testers ปัจจุบัน:</h4>
-        <ul id="testersList"></ul>
-    </div>
-
     <div class="history-section">
         <h3>📜 ประวัติการบันทึก (แก้ไขไม่ได้ - Read Only)</h3>
         <table class="history-table">
@@ -133,7 +128,6 @@ let isSaved = false;
         generateTimeOptions();
         renderTable();
         renderHistory();
-        renderTestersList();
     };
 
     function generateTimeOptions() {
@@ -233,23 +227,12 @@ let isSaved = false;
         });
     }
 
-    function renderTestersList() {
-        const ul = document.getElementById('testersList');
-        ul.innerHTML = "";
-        testers.forEach(t => {
-            const li = document.createElement('li');
-            li.textContent = t;
-            ul.appendChild(li);
-        });
-    }
-
     function addNewTester() {
         const name = document.getElementById('newTesterName').value.trim();
         if (name && !testers.includes(name)) {
             testers.push(name);
             localStorage.setItem('savedTesters', JSON.stringify(testers));
             renderTable();
-            renderTestersList();
         }
     }
 
